@@ -3,35 +3,172 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sharkie</title>
+    <meta name="theme-color" content="#000000" />
+    <title>Sharkie — motion lab</title>
     <style>
-      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background:#000; color:#fff; }
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #000;
+        color: #fff;
+        font-synthesis: none;
+      }
       * { box-sizing: border-box; }
-      body { margin:0; min-height:100vh; background:#000; }
-      main { min-height:100vh; display:grid; grid-template-rows:1fr auto; }
-      .stage { min-height:70vh; display:grid; place-items:center; overflow:hidden; }
-      #sharkie { width:min(54vw, 520px); aspect-ratio:1.35; }
-      .controls { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; padding:24px; }
-      button { border:1px solid #333; background:#0c0c0c; color:#fff; padding:9px 13px; border-radius:999px; cursor:pointer; font:inherit; }
-      button:hover, button:focus-visible { border-color:#777; outline:none; }
-      p { text-align:center; color:#777; margin:0 0 24px; font-size:13px; }
+      html, body { margin: 0; min-height: 100%; background: #000; }
+      body { min-height: 100vh; overflow: hidden; }
+      button { font: inherit; }
+
+      main {
+        min-height: 100vh;
+        position: relative;
+        display: grid;
+        place-items: center;
+        isolation: isolate;
+      }
+
+      .meta {
+        position: fixed;
+        z-index: 2;
+        top: 22px;
+        left: 24px;
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        font-size: 11px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: #8a8a8a;
+        user-select: none;
+      }
+      .meta strong { color: #fff; font-weight: 600; }
+
+      .hint {
+        position: fixed;
+        z-index: 2;
+        top: 22px;
+        right: 24px;
+        margin: 0;
+        color: #656565;
+        font-size: 11px;
+        letter-spacing: .03em;
+        user-select: none;
+      }
+
+      .stage {
+        width: 100%;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 90px 24px 132px;
+        overflow: hidden;
+      }
+
+      #sharkie {
+        width: min(58vw, 560px);
+        min-width: 260px;
+        aspect-ratio: 1.24;
+        cursor: pointer;
+        --sharkie-body: #fff;
+        --sharkie-ink: #000;
+      }
+
+      .dock {
+        position: fixed;
+        z-index: 4;
+        left: 50%;
+        bottom: 22px;
+        transform: translateX(-50%);
+        width: min(920px, calc(100vw - 32px));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 10px;
+        border: 1px solid #242424;
+        border-radius: 18px;
+        background: rgba(8, 8, 8, .92);
+        backdrop-filter: blur(16px);
+      }
+
+      .group {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .divider { width: 1px; align-self: stretch; background: #242424; }
+      .label {
+        padding: 0 6px 0 2px;
+        color: #5f5f5f;
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: .11em;
+        text-transform: uppercase;
+      }
+
+      .dock button {
+        appearance: none;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        background: transparent;
+        color: #9b9b9b;
+        padding: 8px 10px;
+        min-height: 34px;
+        cursor: pointer;
+        font-size: 12px;
+        line-height: 1;
+        transition: color 140ms ease, background 140ms ease, border-color 140ms ease, transform 100ms ease;
+      }
+      .dock button:hover { color: #fff; background: #151515; }
+      .dock button:active { transform: translateY(1px); }
+      .dock button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+      .dock button.is-active { color: #000; background: #fff; }
+      .utility { color: #666 !important; }
+
+      @media (max-width: 760px) {
+        .hint { display: none; }
+        .dock {
+          justify-content: flex-start;
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+        .dock::-webkit-scrollbar { display: none; }
+        .label { display: none; }
+        #sharkie { width: min(82vw, 500px); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .dock button { transition: none; }
+      }
     </style>
   </head>
   <body>
     <main>
-      <section class="stage"><div id="sharkie"></div></section>
-      <footer>
-        <div class="controls">
-          <button data-state="idle">idle</button>
-          <button data-state="happy">happy</button>
-          <button data-state="curious">curious</button>
-          <button data-state="chomp">chomp</button>
-          <button data-state="bounce">bounce</button>
-          <button data-state="peek">peek</button>
-          <button data-state="dive">dive</button>
+      <div class="meta"><strong>Sharkie</strong><span>motion lab</span></div>
+      <p class="hint">move anywhere · click sharkie</p>
+
+      <section class="stage" aria-label="Sharkie preview">
+        <div id="sharkie"></div>
+      </section>
+
+      <nav class="dock" aria-label="Sharkie animation controls">
+        <div class="group">
+          <span class="label">mood</span>
+          <button class="is-active" data-mood="idle" aria-pressed="true">idle</button>
+          <button data-mood="happy" aria-pressed="false">happy</button>
+          <button data-mood="curious" aria-pressed="false">curious</button>
+          <button data-mood="surprised" aria-pressed="false">surprised</button>
         </div>
-        <p>Move the pointer around Sharkie.</p>
-      </footer>
+        <span class="divider" aria-hidden="true"></span>
+        <div class="group">
+          <span class="label">action</span>
+          <button data-action="chomp">chomp</button>
+          <button data-action="bounce">bounce</button>
+          <button data-action="peek">peek</button>
+          <button data-action="dive">dive</button>
+        </div>
+        <span class="divider" aria-hidden="true"></span>
+        <button class="utility" data-pause aria-pressed="false">pause</button>
+      </nav>
     </main>
     <script type="module" src="/src/demo.ts"></script>
   </body>

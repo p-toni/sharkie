@@ -1,14 +1,30 @@
 {
   "name": "sharkie-mascot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "A tiny animated SVG shark mascot for the web.",
+  "description": "A tiny, expressive SVG shark mascot for the web.",
   "license": "MIT",
+  "main": "./dist/sharkie.js",
+  "module": "./dist/sharkie.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/sharkie.js"
+    }
+  },
+  "files": [
+    "dist",
+    "ATTRIBUTION.md",
+    "vendor/bloub/LICENSE"
+  ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "test": "vitest run"
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && vite build && tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
