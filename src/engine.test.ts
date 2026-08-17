@@ -25,6 +25,18 @@ describe('sampleSharkie', () => {
     expect(frame.mouth.fang).toBe(1)
   })
 
+  it('keeps open-mouth poses centered in the face instead of dropping toward the jaw', () => {
+    const surprised = sampleSharkie(0, { state: 'surprised', reducedMotion: true })
+    const chomp = sampleSharkie(0.38, { state: 'chomp', stateTime: 0.38, reducedMotion: true })
+
+    // The SVG renderer places an open ellipse at mouth.y + 11.
+    // These are optical centers, chosen to stay aligned with the neutral smile.
+    expect(surprised.mouth.y + 11).toBeCloseTo(29, 1)
+    expect(chomp.mouth.y + 11).toBeCloseTo(27.5, 1)
+    expect(surprised.mouth.y + 11).toBeLessThan(35)
+    expect(chomp.mouth.y + 11).toBeLessThan(35)
+  })
+
   it('moves gaze toward an external target without changing eye size', () => {
     const left = sampleSharkie(0, { reducedMotion: true, look: { x: -1, y: 0, mix: 1 } })
     const right = sampleSharkie(0, { reducedMotion: true, look: { x: 1, y: 0, mix: 1 } })
