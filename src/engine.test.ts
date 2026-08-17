@@ -23,18 +23,41 @@ describe('sampleSharkie', () => {
     expect(frame.eyeLeft.ry).toBeCloseTo(22.6, 1)
     expect(frame.mouth.width).toBeCloseTo(88, 1)
     expect(frame.mouth.fang).toBe(1)
+    expect(frame.mouth.mode).toBe('smile')
   })
 
-  it('keeps open-mouth poses centered in the face instead of dropping toward the jaw', () => {
-    const surprised = sampleSharkie(0, { state: 'surprised', reducedMotion: true })
-    const chomp = sampleSharkie(0.38, { state: 'chomp', stateTime: 0.38, reducedMotion: true })
+  it('keeps curious as an actual smile instead of leaking an open-mouth topology', () => {
+    const curious = sampleSharkie(0, { state: 'curious', reducedMotion: true })
+    expect(curious.mouth.mode).toBe('smile')
+    expect(curious.mouth.open).toBe(0)
+    expect(curious.mouth.width).toBeGreaterThan(60)
+  })
 
-    // The SVG renderer places an open ellipse at mouth.y + 11.
-    // These are optical centers, chosen to stay aligned with the neutral smile.
-    expect(surprised.mouth.y + 11).toBeCloseTo(29, 1)
-    expect(chomp.mouth.y + 11).toBeCloseTo(27.5, 1)
-    expect(surprised.mouth.y + 11).toBeLessThan(35)
-    expect(chomp.mouth.y + 11).toBeLessThan(35)
+  it('centers the surprised mouth under the eye pair and keeps it small', () => {
+    const surprised = sampleSharkie(0, { state: 'surprised', reducedMotion: true })
+    const eyeMidX = (surprised.eyeLeft.x + surprised.eyeRight.x) / 2
+    expect(surprised.mouth.mode).toBe('surprised')
+    expect(surprised.mouth.x).toBeCloseTo(eyeMidX, 0)
+    expect(surprised.mouth.openWidth).toBeLessThanOrEqual(20)
+    expect(surprised.mouth.openHeight).toBeLessThanOrEqual(22)
+    expect(surprised.mouth.y + 11).toBeLessThan(30)
+  })
+
+  it('keeps peak chomp close to the facial center instead of drifting toward the cheek', () => {
+    const chomp = sampleSharkie(0.38, { state: 'chomp', stateTime: 0.38, reducedMotion: true })
+    const eyeMidX = (chomp.eyeLeft.x + chomp.eyeRight.x) / 2
+    expect(chomp.mouth.mode).toBe('chomp')
+    expect(Math.abs(chomp.mouth.x - eyeMidX)).toBeLessThan(7)
+    expect(chomp.mouth.openWidth).toBeLessThan(52)
+    expect(chomp.mouth.openHeight).toBeLessThan(38)
+  })
+
+  it('switches mouth topology to the destination expression immediately', () => {
+    const surprised = sampleSharkie(0, { state: 'surprised', reducedMotion: true })
+    const curious = sampleSharkie(0, { state: 'curious', reducedMotion: true })
+    const early = blendSharkieFrames(surprised, curious, 0.05)
+    expect(early.mouth.mode).toBe('smile')
+    expect(early.mouth.open).toBe(0)
   })
 
   it('moves gaze toward an external target without changing eye size', () => {
