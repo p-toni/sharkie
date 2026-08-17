@@ -4,6 +4,7 @@ import { sharkSilhouette } from './profiles'
 
 export type SharkieState = 'idle' | 'happy' | 'curious' | 'surprised' | 'chomp' | 'bounce' | 'peek' | 'dive'
 export type SharkieAction = 'chomp' | 'bounce' | 'peek' | 'dive'
+export type MouthMode = 'smile' | 'surprised' | 'chomp'
 
 export interface LookTarget { x: number; y: number; mix?: number }
 export interface SharkieSampleOptions {
@@ -22,6 +23,7 @@ export interface EyeFrame {
 }
 
 export interface MouthFrame {
+  mode: MouthMode
   x: number
   y: number
   width: number
@@ -58,7 +60,7 @@ const SCALE = 100
 const BASE_FACE = {
   leftEye: { x: -60.7, y: -15.9, rx: 17.0, ry: 22.6, rotation: 8 },
   rightEye: { x: -15.8, y: -8.4, rx: 17.0, ry: 22.6, rotation: 8 },
-  mouth: { x: -25.0, y: 19.7, width: 88.0, depth: 28.0, stroke: 9.5, skew: -1.5, open: 0, openWidth: 48, openHeight: 34, fang: 1, teeth: 0 }
+  mouth: { mode: 'smile', x: -25.0, y: 19.7, width: 88.0, depth: 28.0, stroke: 9.5, skew: -1.5, open: 0, openWidth: 48, openHeight: 34, fang: 1, teeth: 0 }
 } as const
 
 function idleBody(t: number, reducedMotion: boolean): Silhouette {
@@ -192,18 +194,29 @@ function eyeMood(state: SharkieState, pulse: number) {
 }
 
 function mouthFor(state: SharkieState, pulse: number): MouthFrame {
-  const base = { ...BASE_FACE.mouth }
+  const base: MouthFrame = { ...BASE_FACE.mouth }
   if (state === 'happy') return { ...base, y: 17.5, width: 94, depth: 34.5, skew: -2.8, fang: 0.82 }
   if (state === 'curious') return { ...base, x: -28, y: 21.5, width: 72, depth: 18.5, skew: -4.5, fang: 0.75 }
 
-  // Open-mouth poses should preserve the neutral face's optical center. The
-  // renderer positions the open ellipse at `y + 11`, so these baselines are
-  // intentionally higher than the closed-smile baseline rather than dropping
-  // the mouth toward the lower edge of the blob.
-  if (state === 'surprised') return { ...base, x: -25, y: 18, open: 1, openWidth: 24, openHeight: 31, fang: 0, teeth: 0 }
+  // An open mouth has a different optical anchor from the wide smile. Center it
+  // under the eye pair and keep it small enough to read as a mouth, not a nose.
+  if (state === 'surprised') {
+    return { ...base, mode: 'surprised', x: -38, y: 14.5, open: 1, openWidth: 18, openHeight: 21, fang: 0, teeth: 0 }
+  }
   if (state === 'chomp') {
     const open = clamp((pulse - 0.08) / 0.92)
-    return { ...base, y: 16.5, open, openWidth: 48 + 9 * open, openHeight: 32 + 11 * open, depth: 24, fang: 1 - open, teeth: open }
+    return {
+      ...base,
+      mode: 'chomp',
+      x: -33,
+      y: 14.5,
+      open,
+      openWidth: 42 + 7 * open,
+      openHeight: 27 + 8 * open,
+      depth: 24,
+      fang: 1 - open,
+      teeth: open
+    }
   }
   return base
 }
@@ -264,7 +277,14 @@ function blendEye(a: EyeFrame, b: EyeFrame, t: number): EyeFrame {
 }
 
 function blendMouth(a: MouthFrame, b: MouthFrame, t: number): MouthFrame {
+  // A smile and an open mouth are different topologies, not two opacity layers
+  // of the same shape. When intent changes, use the destination topology
+  // immediately and let the body/eyes carry the transition. This prevents a
+  // stale surprised/chomp oval from lingering under a newly selected mood.
+  if (a.mode !== b.mode) return { ...b }
+
   return {
+    mode: b.mode,
     x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), width: lerp(a.width, b.width, t), depth: lerp(a.depth, b.depth, t),
     stroke: lerp(a.stroke, b.stroke, t), skew: lerp(a.skew, b.skew, t), open: lerp(a.open, b.open, t),
     openWidth: lerp(a.openWidth, b.openWidth, t), openHeight: lerp(a.openHeight, b.openHeight, t), fang: lerp(a.fang, b.fang, t), teeth: lerp(a.teeth, b.teeth, t)
