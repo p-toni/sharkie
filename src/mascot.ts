@@ -40,6 +40,11 @@ function setPath(path: SVGPathElement, d: string) {
   path.setAttribute('d', d)
 }
 
+function setVisible(element: SVGElement, visible: boolean) {
+  if (visible) element.removeAttribute('display')
+  else element.setAttribute('display', 'none')
+}
+
 export class Sharkie {
   readonly element: SVGSVGElement
 
@@ -102,6 +107,7 @@ export class Sharkie {
     svg.setAttribute('viewBox', '-140 -132 280 238')
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
     svg.setAttribute('shape-rendering', 'geometricPrecision')
+    svg.dataset.state = this.state
     svg.style.width = '100%'
     svg.style.height = '100%'
     svg.style.overflow = 'visible'
@@ -229,6 +235,7 @@ export class Sharkie {
     this.transitionDuration = Math.max(0, transitionMs) / 1000
     this.state = state
     this.stateElapsed = 0
+    this.element.dataset.state = state
   }
 
   private attachPointerTracking() {
@@ -366,7 +373,13 @@ export class Sharkie {
     const rightY = m.y + m.skew
     setPath(this.smile, `M${r3(leftX)} ${r3(leftY)} C${r3(m.x - m.width * 0.28)} ${r3(m.y + m.depth)} ${r3(m.x + m.width * 0.2)} ${r3(m.y + m.depth + 4)} ${r3(rightX)} ${r3(rightY)}`)
     this.smile.setAttribute('stroke-width', String(m.stroke))
-    const smileOpacity = 1 - smooth(clamp(m.open * 1.28))
+
+    const smileOpacity = m.mode === 'smile'
+      ? 1
+      : m.mode === 'chomp'
+        ? 1 - smooth(clamp((m.open - 0.04) / 0.58))
+        : 0
+    setVisible(this.smile, smileOpacity > 0.001)
     this.smile.setAttribute('opacity', String(smileOpacity))
 
     const fangOpacity = smileOpacity * m.fang
@@ -376,19 +389,29 @@ export class Sharkie {
     const rx = m.x + m.width * 0.18
     setPath(this.fangLeft, `M${r3(lx - 5.5)} ${r3(fangTop - 1)} L${r3(lx + 5.2)} ${r3(fangTop)} L${r3(lx)} ${r3(fangTop + fangH)} Z`)
     setPath(this.fangRight, `M${r3(rx - 5.2)} ${r3(fangTop + 1)} L${r3(rx + 5.5)} ${r3(fangTop)} L${r3(rx + 0.6)} ${r3(fangTop + fangH * 0.92)} Z`)
+    setVisible(this.fangLeft, fangOpacity > 0.001)
+    setVisible(this.fangRight, fangOpacity > 0.001)
     this.fangLeft.setAttribute('opacity', String(fangOpacity))
     this.fangRight.setAttribute('opacity', String(fangOpacity))
 
+    const openOpacity = m.mode === 'surprised'
+      ? 1
+      : m.mode === 'chomp'
+        ? smooth(clamp((m.open - 0.1) / 0.9))
+        : 0
     this.mouthOpen.setAttribute('cx', String(m.x))
     this.mouthOpen.setAttribute('cy', String(m.y + 11))
     this.mouthOpen.setAttribute('rx', String(m.openWidth / 2))
     this.mouthOpen.setAttribute('ry', String(m.openHeight / 2))
-    this.mouthOpen.setAttribute('opacity', String(m.open))
+    setVisible(this.mouthOpen, openOpacity > 0.001)
+    this.mouthOpen.setAttribute('opacity', String(openOpacity))
 
     const toothY = m.y + 1
     setPath(this.openToothLeft, `M${r3(m.x - 13)} ${r3(toothY)} L${r3(m.x - 3)} ${r3(toothY)} L${r3(m.x - 7.5)} ${r3(toothY + 9)} Z`)
     setPath(this.openToothRight, `M${r3(m.x + 3)} ${r3(toothY)} L${r3(m.x + 13)} ${r3(toothY)} L${r3(m.x + 8)} ${r3(toothY + 8.5)} Z`)
-    const teethOpacity = m.open * m.teeth
+    const teethOpacity = openOpacity * m.teeth
+    setVisible(this.openToothLeft, teethOpacity > 0.001)
+    setVisible(this.openToothRight, teethOpacity > 0.001)
     this.openToothLeft.setAttribute('opacity', String(teethOpacity))
     this.openToothRight.setAttribute('opacity', String(teethOpacity))
 
