@@ -195,10 +195,15 @@ function mouthFor(state: SharkieState, pulse: number): MouthFrame {
   const base = { ...BASE_FACE.mouth }
   if (state === 'happy') return { ...base, y: 17.5, width: 94, depth: 34.5, skew: -2.8, fang: 0.82 }
   if (state === 'curious') return { ...base, x: -28, y: 21.5, width: 72, depth: 18.5, skew: -4.5, fang: 0.75 }
-  if (state === 'surprised') return { ...base, x: -25, y: 28, open: 1, openWidth: 24, openHeight: 31, fang: 0, teeth: 0 }
+
+  // Open-mouth poses should preserve the neutral face's optical center. The
+  // renderer positions the open ellipse at `y + 11`, so these baselines are
+  // intentionally higher than the closed-smile baseline rather than dropping
+  // the mouth toward the lower edge of the blob.
+  if (state === 'surprised') return { ...base, x: -25, y: 18, open: 1, openWidth: 24, openHeight: 31, fang: 0, teeth: 0 }
   if (state === 'chomp') {
     const open = clamp((pulse - 0.08) / 0.92)
-    return { ...base, y: 21, open, openWidth: 48 + 9 * open, openHeight: 32 + 11 * open, depth: 24, fang: 1 - open, teeth: open }
+    return { ...base, y: 16.5, open, openWidth: 48 + 9 * open, openHeight: 32 + 11 * open, depth: 24, fang: 1 - open, teeth: open }
   }
   return base
 }
