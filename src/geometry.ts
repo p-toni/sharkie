@@ -1,6 +1,6 @@
 import { TAU, lerp, r2 } from './math'
 
-export const PROFILE_SAMPLES = 64
+export const PROFILE_SAMPLES = 128
 const ANGLES = Array.from({ length: PROFILE_SAMPLES }, (_, i) => (i / PROFILE_SAMPLES) * TAU)
 const COS = ANGLES.map(Math.cos)
 const SIN = ANGLES.map(Math.sin)
@@ -15,43 +15,20 @@ export interface Silhouette {
   sy: number
 }
 
-export function profileFromPolygon(poly: Point[], cx = 0, cy = 0): number[] {
-  const radii = new Array<number>(PROFILE_SAMPLES).fill(0)
-  for (let k = 0; k < PROFILE_SAMPLES; k++) {
-    const dx = COS[k] ?? 0
-    const dy = SIN[k] ?? 0
-    let best = 0
-    for (let i = 0; i < poly.length; i++) {
-      const a = poly[i]!
-      const b = poly[(i + 1) % poly.length]!
-      const ex = b.x - a.x
-      const ey = b.y - a.y
-      const den = dx * ey - dy * ex
-      if (Math.abs(den) < 1e-9) continue
-      const px = a.x - cx
-      const py = a.y - cy
-      const t = (px * ey - py * ex) / den
-      const u = (px * dy - py * dx) / den
-      if (t > best && u >= 0 && u <= 1) best = t
-    }
-    radii[k] = best
-  }
-  return radii
-}
-
 export function blend(a: Silhouette, b: Silhouette, t: number): Silhouette {
+  const p = Math.max(0, Math.min(1, t))
   const radii = new Array<number>(PROFILE_SAMPLES)
-  for (let i = 0; i < PROFILE_SAMPLES; i++) radii[i] = lerp(a.radii[i] ?? 1, b.radii[i] ?? 1, t)
+  for (let i = 0; i < PROFILE_SAMPLES; i++) radii[i] = lerp(a.radii[i] ?? 1, b.radii[i] ?? 1, p)
   let dRot = b.rot - a.rot
   while (dRot > Math.PI) dRot -= TAU
   while (dRot < -Math.PI) dRot += TAU
   return {
     radii,
-    rot: a.rot + dRot * t,
-    cx: lerp(a.cx, b.cx, t),
-    cy: lerp(a.cy, b.cy, t),
-    sx: lerp(a.sx, b.sx, t),
-    sy: lerp(a.sy, b.sy, t)
+    rot: a.rot + dRot * p,
+    cx: lerp(a.cx, b.cx, p),
+    cy: lerp(a.cy, b.cy, p),
+    sx: lerp(a.sx, b.sx, p),
+    sy: lerp(a.sy, b.sy, p)
   }
 }
 
@@ -84,4 +61,8 @@ export function closedPath(pts: Point[], tension = 1 / 6): string {
     d += `C${r2(c1x)} ${r2(c1y)} ${r2(c2x)} ${r2(c2y)} ${r2(p2.x)} ${r2(p2.y)}`
   }
   return `${d}Z`
+}
+
+export function bodyPath(s: Silhouette, scale = 100): string {
+  return closedPath(toPoints(s, scale))
 }

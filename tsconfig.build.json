@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist/types",
+    "stripInternal": true
+  },
+  "include": ["src/index.ts", "src/engine.ts", "src/geometry.ts", "src/math.ts", "src/mascot.ts", "src/profiles.ts"]
+}

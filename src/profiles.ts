@@ -1,26 +1,27 @@
-import { profileFromPolygon, type Silhouette } from './geometry'
+import type { Silhouette } from './geometry'
 
-// Original Sharkie geometry. No x.ai/Bloub measured avatar profiles are included.
-const SHARK_POLY = [
-  { x: 1.14, y: 0.18 },
-  { x: 0.96, y: 0.58 },
-  { x: 0.54, y: 0.78 },
-  { x: -0.18, y: 0.82 },
-  { x: -0.82, y: 0.64 },
-  { x: -1.14, y: 0.28 },
-  { x: -1.18, y: -0.08 },
-  { x: -1.02, y: -0.42 },
-  { x: -0.64, y: -0.64 },
-  { x: -0.18, y: -0.72 },
-  { x: 0.18, y: -0.68 },
-  { x: 0.38, y: -1.06 },
-  { x: 0.62, y: -0.72 },
-  { x: 0.90, y: -0.52 },
-  { x: 1.12, y: -0.22 }
-]
-
-const base = profileFromPolygon(SHARK_POLY)
+// Sharkie's base silhouette was sampled from the accepted mascot artwork rather
+// than from Bloub/x.ai reference material. Keeping a fixed angular profile makes
+// every pose morphable while preserving the intentionally soft, asymmetric fin.
+const BASE_RADII = [
+  1.1402, 1.1582, 1.1749, 1.1889, 1.1994, 1.2055, 1.2051, 1.1997,
+  1.1878, 1.1701, 1.1458, 1.1183, 1.0853, 1.0544, 1.0229, 0.9939,
+  0.9650, 0.9405, 0.9160, 0.8961, 0.8756, 0.8589, 0.8431, 0.8299,
+  0.8192, 0.8104, 0.8012, 0.7937, 0.7881, 0.7842, 0.7804, 0.7801,
+  0.7798, 0.7806, 0.7832, 0.7875, 0.7914, 0.7975, 0.8073, 0.8170,
+  0.8259, 0.8371, 0.8505, 0.8663, 0.8825, 0.9008, 0.9202, 0.9424,
+  0.9673, 0.9902, 1.0165, 1.0436, 1.0685, 1.0946, 1.1186, 1.1405,
+  1.1593, 1.1745, 1.1849, 1.1915, 1.1926, 1.1920, 1.1885, 1.1838,
+  1.1757, 1.1646, 1.1523, 1.1393, 1.1260, 1.1116, 1.0973, 1.0822,
+  1.0677, 1.0519, 1.0368, 1.0212, 1.0054, 0.9916, 0.9770, 0.9627,
+  0.9495, 0.9347, 0.9205, 0.9064, 0.8922, 0.8794, 0.8663, 0.8528,
+  0.8409, 0.8291, 0.8187, 0.8084, 0.7991, 0.7896, 0.7814, 0.7745,
+  0.7675, 0.7618, 0.7583, 0.7551, 0.7499, 0.7474, 0.7538, 0.8028,
+  0.8698, 0.9392, 1.0072, 1.0698, 1.1259, 1.1692, 1.1929, 1.1870,
+  1.1292, 1.0360, 0.9659, 0.9206, 0.8944, 0.8905, 0.9069, 0.9289,
+  0.9522, 0.9751, 1.0002, 1.0263, 1.0495, 1.0735, 1.0966, 1.1189,
+] as const
 
 export function sharkSilhouette(pose: Partial<Omit<Silhouette, 'radii'>> = {}): Silhouette {
-  return { radii: [...base], rot: 0, cx: 0, cy: 0, sx: 1, sy: 1, ...pose }
+  return { radii: [...BASE_RADII], rot: 0, cx: 0, cy: 0, sx: 1, sy: 1, ...pose }
 }
